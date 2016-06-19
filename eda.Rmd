@@ -1,0 +1,311 @@
+---
+title: "Milestone report for data science capstone"
+author: "Claus Gaarde Pedersen"
+date: "5 jun 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.width=10)
+```
+
+# Exploratory analysis of data from [HC Corpora](http://www.corpora.heliohost.org/) {.tabset .tabset-pills}
+
+## Report
+
+The purpose of this report is to make an exploratory analysis of data from HC Corpora, which will be used later in making an app, that by using an ngram model, can predict the next word in a sentence.  For this study we will focus on examining the 3 datasets from the english part. The 3 parts, are blogs-, news- and twitter-documents. 
+
+```{r ref.label="loadData", echo=FALSE, results=FALSE, include=FALSE}
+```
+
+
+####  Examining full length files
+
+The first table below are stats extracted from the full files. The memorysize is well above the filesizes so apparantly the whole files are loaded in. The number of documents loaded in can be seen, and by comparing with the number of characters its clear that twitter contains the least characters per post, which is to be expected. The words per sentence is also the lowest for Twitter, with blogs and news about even, and that is also expected. 
+
+```{r ref.label="examfile", echo=FALSE}
+```
+
+
+#### Summary of words per document
+
+Next we will look at the amount of words per document. For that a summary is made for each file, showing quantiles (what the 1/4 the ½ and the 3/4 documents wordcount is) and what the min, mean and max wordcount is.  
+The max wordcount for blogs and news show that there are some extreme cases with documents containing alot of words. In the case of blogs it also skews the mean up so its far away from the median. Twitter have a max character length restriction that limits the amount of words in an post, so its max is not high.
+
+```{r ref.label="sumwords", echo=FALSE}
+```
+
+
+#### Histogram of words per document
+
+Next histograms for the 3 files will be shown. They are adjusted so they dont get effected by the outliers in blogs and news.  
+Blogs have the largest concentration of documents with around 5 words, declines rapidly, short plataue from 20 to 40 words, declines slowly from there.  
+Newshist slighty bell-shaped with largets concentration around 30 words/document, where the left-side has been 'truncated' up into a spike around 4 words.  
+Twitterhist spike at 6 words slowly declining until 21 words, rapid decline after that.  
+
+```{r ref.label="wordhist", echo=FALSE}
+```
+
+#### Assessment of the histograms
+
+The goal of the final assignment is to make a prediction model of text input. For that it will be best to train on data that have good amount of normal sentences. The histograms shows that there is a large amount of blogs, with limited number of words. A further study could be to examine if these short blogs are much different than the other blogs. To keep this report brief, this study is moved to the Blog examination appendix (choose tab at the top)
+
+
+#### Sampling
+
+```{r ref.label="samplinit", echo=FALSE}
+```
+
+After the full file examination, we will continue by looking at what these documents contain, by starting some preliminary modelling. This part require a large degree of computational power so for efficiency only a smaller random sample from each file is used. In this study its `r pct*100` %.  
+
+#### Preliminary modelling
+
+The modelling in this report will be done with the quanteda packages. By using this package, a corpus will be made. This is a structured set of text-documents, Which will be useable for further studying making a document feature matrix. This is a matrix that can tell how often a feature (here a word) occurs in each document. Doing those steps will allow us to take a first glimpse of whats in the documents, by presenting a wordcloud for each file. Normally wordclouds are being cleaned for stopwords - what we call the most common words in the language that normally dont have much meaning by themselves. They are usually removed, so the content words will be clearer to see. But thats not the purpose of our analysis, we want to see all words being used. 
+
+```{r ref.label="wordcloud", echo=FALSE}
+```
+
+
+#### Analysis of wordclouds
+
+The first impulse from the wordclouds is that blogs and news are quite similar, and twitter stands out as being different. 'You', 'I', 'me', 'my' is getting used much more in twitter. Except you in twitter the topmost common words is still about the same between the 3 file-types.  
+As the final goal is to make a prediction model, this can suggest making different models for twitter and for the rest. But this also depends on how the sentences are built up, and for that we will go to the next step.
+
+
+#### Sentences
+
+In predicting the next word you use the knowledge of the prior words to have a guess of what the most common next usually is. To see how they are we will create the first step in doing so, by making bi-grams - what 2 words follow each other. The most common bigrams for blogs and twitter can be seen below.
+
+```{r ref.label="bigram", echo=FALSE}
+```
+
+
+### Looking forward to the final assignment
+
+I have to decide if i want to make a general model that tries to predict for all the 3 types of documents, or make a model that are more specialised to one type. If possible i would probably make a more specialised, even make 2 different models, if the final shiny app can handle it.  
+Other thinks to include in the model, could be removing profanity. It shouldnt be something the model end up suggesting for the next word. Some common lists can be found on the web, and they can easily be removed like stopwords.  
+Foreign words is another thing. According to HC Corpora, they have already been attempted to be removed, but there can still be some left. Probably have to incorporate dictionary to find the words that dosnt exists in the english language. Though thats stuff that has to be researched first.  
+I also plan to make the shiny app have some swift-key functionality, in that not just the highest scoring next word will be shown, but the 3 highest scoring. It will feel better even when you are not predicting the right next word, that hopefully one of the other 2 is.
+
+
+## Blogs examination
+
+#### Study of blogs length effect on sentences
+
+The examination of blogs will be done by dividing the file into 3 groups one with documents with less than 5 words, another group with 6-10 words, and the last group where there is over 10 words. Afterwards they will be examined for most common words in each. The most common words will be stopwords, the normal 'filler-words' we use alot of when constructing sentences. If there is differences in the stopwords used, it will be used as an indication that the sentence construction between the 3 groups are also different.
+
+```{r ref.label="blogexam", echo=FALSE}
+```
+
+
+#### Analysis
+
+The table above show the most common words for each group by its ranking with 1 being the most common. The 2 most common words 'the' and 'and' is the same across the groups, before the differences start to show. There is quite some difference between the 5 and large group when you get to the rankings from 10-20. The differences is not so clear just looking at the numbers in the table. My initial quess before starting the analysis is that blogs with low wordcount is more like twitter posts, and they dont necessary have to make a normally correct sentence. My assumption can maybe be indicated in the higher usage of you and me for the 5 group. The differences between each group is more clear when you look at the samples below.  
+I cant make a clear conclusion but just a suggestion that if the prediction algorithm tries to be a general prediction where everything should be possible then everything should be used in the model. If the prediction model is focussed on making predictions for normal sentences in a blog, i would suggest removing the blogs with very low wordcount.  
+
+
+#### Sample documents of each blogs group
+
+```{r ref.label="blogsamples", echo=FALSE}
+```
+
+
+## Code
+
+```{r loadData, eval=FALSE}
+# library & data setup
+
+options(scipen=8)
+library(readr)
+library(stringi)
+library(quanteda)
+library(RColorBrewer)
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(gridExtra)
+
+# the source dosnt specify encoding. Trying to use guess from readr packages
+guess_encoding("final/en_US/en_US.blogs.txt")
+guess_encoding("final/en_US/en_US.news.txt")
+guess_encoding("final/en_US/en_US.twitter.txt")
+# all guess UTF-8 with confidence 1
+
+# using readlines to get character vectors
+blogs.file <- readLines("final/en_US/en_US.blogs.txt", encoding="UTF-8")
+# difficult characters in news.file so ahve to read as binary
+tmp <- file("final/en_US/en_US.news.txt", open="rb")
+news.file <- readLines(tmp, encoding="UTF-8")
+close(tmp)
+# some null values in twitter ... pun intended :-)
+twitter.file <- readLines("final/en_US/en_US.twitter.txt", skipNul=TRUE, encoding="UTF-8")
+
+# remove bad characters. using iconv, because i couldnt find the solution with stringi
+blogs.file <- iconv(blogs.file, from="UTF-8", to="ASCII", sub="")
+news.file <- iconv(news.file, from="UTF-8", to="ASCII", sub="")
+twitter.file <- iconv(twitter.file, from="UTF-8", to="ASCII", sub="")
+```
+
+```{r examfile, eval=FALSE}
+# examining full length files
+
+filenames <- c("blogs", "news", "twitter")
+# file size
+txt.file.size <- c(file.size("final/en_US/en_US.blogs.txt"),
+                   file.size("final/en_US/en_US.news.txt"),
+                   file.size("final/en_US/en_US.twitter.txt"))
+# memory.size
+txt.mem.size <- c(object.size(blogs.file), object.size(news.file), object.size(twitter.file))
+# documents
+txt.len <- c(length(blogs.file), length(news.file), length(twitter.file))
+# chars
+txt.chars <- c(sum(stri_count_boundaries(blogs.file, type="character")),
+               sum(stri_count_boundaries(news.file, type="character")),
+               sum(stri_count_boundaries(twitter.file, type="character")))
+# words
+blogs.words <- stri_count_words(blogs.file)
+news.words <- stri_count_words(news.file)
+twitter.words <- stri_count_words(twitter.file)
+txt.words <- c(sum(blogs.words), sum(news.words), sum(twitter.words))
+# sentences
+txt.sent <- c(sum(stri_count_boundaries(blogs.file, type="sentence")),
+              sum(stri_count_boundaries(news.file, type="sentence")),
+              sum(stri_count_boundaries(twitter.file, type="sentence")))
+# file stats
+sum.txt.stats <- data.frame(file=filenames, filesize=txt.file.size, memorysize=txt.mem.size,
+                            docs=txt.len, chars=txt.chars, words=txt.words,
+                            sentences=txt.sent)
+kable(sum.txt.stats, caption="File stats")
+```
+
+```{r sumwords, eval=FALSE}
+# summary on words
+
+summary.words <- rbind(summary(blogs.words), summary(news.words), summary(twitter.words))
+row.names(summary.words) <- filenames
+kable(summary.words, caption="Summary per file")
+```
+
+```{r wordhist, eval=FALSE}
+# histograms
+
+bplot <- qplot(blogs.words, geom="histogram", xlim=c(0,200), bins=201, main="Histogram of blog wordcounts")
+nplot <- qplot(news.words, geom="histogram", xlim=c(0,100), bins=101, main="Histogram of news wordcounts")
+tplot <- qplot(twitter.words, geom="histogram", bins=47, main="Histogram of twitter wordcounts")
+grid.arrange(bplot, nplot, tplot, ncol=3)
+```
+
+```{r samplinit, eval=FALSE}
+# Sampling setup
+
+pct <- 0.01
+
+set.seed(1234)
+blogs <- sample(blogs.file, pct*length(blogs.file))
+news <- sample(news.file, pct*length(news.file))
+twitter <- sample(twitter.file, pct*length(twitter.file))
+
+blogs.corp <- corpus(blogs)
+news.corp <- corpus(news)
+twitter.corp <- corpus(twitter)
+```
+
+```{r wordcloud, eval=FALSE}
+# Wordclouds - document feature matrix
+
+# free some memory
+rm(news.file, twitter.file)
+
+# make document feature matrix with lowercasing, removed numbers, removed punctuation, removed whitespaces
+# and stemmed.
+# to have a meaningfull wordcloud, stopwords are also removed for 1-gram. For predicting they should not be removed
+blogs.dfm <- dfm(blogs.corp, stem=TRUE, verbose=FALSE)
+news.dfm <- dfm(news.corp, stem=TRUE, verbose=FALSE)
+twitter.dfm <- dfm(twitter.corp, stem=TRUE, verbose=FALSE)
+
+# wordcloud of most common words
+par(mfrow = c(1, 3))
+plot(blogs.dfm, max.words = 80, colors = brewer.pal(6, "Dark2"), scale = c(8, .5))
+title("Blogs wordcloud")
+plot(news.dfm, max.words = 80, colors = brewer.pal(6, "Dark2"), scale = c(8, .5))
+title("News wordcloud")
+plot(twitter.dfm, max.words = 80, colors = brewer.pal(6, "Dark2"), scale = c(8, .5))
+title("Twitter wordcloud")
+```
+
+```{r bigram, eval=FALSE}
+# bigrams
+
+# free some memory
+rm(blogs.dfm, news.dfm, twitter.dfm)
+
+blogs.dfm.n2 <- dfm(blogs.corp, stem=TRUE, ngrams=2, verbose=FALSE)
+twitter.dfm.n2 <- dfm(twitter.corp, stem=TRUE, ngrams=2, verbose=FALSE)
+
+# generate barplot of most common blogs bigrams
+blogs.tf.n2 <- topfeatures(blogs.dfm.n2, 20)
+blogs.tf.n2.df <- data.frame(feature=names(blogs.tf.n2), count=blogs.tf.n2, row.names=NULL)
+blogs.tf.n2.df$feature <- factor(blogs.tf.n2.df$feature, levels=rev(blogs.tf.n2.df$feature))
+bn2.plot <- ggplot(blogs.tf.n2.df, aes(blogs.tf.n2.df$feature, blogs.tf.n2.df$count)) +
+    geom_bar(stat="identity") + coord_flip() + ggtitle("Blogs bi-grams") 
+
+# generate barplot of most common twitter bigrams
+twit.tf.n2 <- topfeatures(twitter.dfm.n2, 20)
+twit.tf.n2.df <- data.frame(feature=names(twit.tf.n2), count=twit.tf.n2, row.names=NULL)
+twit.tf.n2.df$feature <- factor(twit.tf.n2.df$feature, levels=rev(twit.tf.n2.df$feature))
+tn2.plot <- ggplot(twit.tf.n2.df, aes(twit.tf.n2.df$feature, twit.tf.n2.df$count)) +
+    geom_bar(stat="identity") + coord_flip() + ggtitle("Twitter bi-grams")
+grid.arrange(bn2.plot, tn2.plot, ncol=2)
+```
+
+```{r blogexam, eval=FALSE}
+# Blogs examination
+
+# sampling in groups of wordcounts <=5, 6-10 and >10. Keeping the sample size (number of docs) even for each group.
+pct <- 0.1
+sampl.size <- pct*length(blogs.file)
+
+set.seed(1234)
+blogsl.file <- blogs.file[stri_count_words(blogs.file)>10]
+blogsl <- sample(blogsl.file, sampl.size)
+blogs.file5 <- blogs.file[stri_count_words(blogs.file)<=5]
+blogs5 <- sample(blogs.file5, sampl.size)
+blogs.file10 <- blogs.file[stri_count_words(blogs.file)<=10 & stri_count_words(blogs.file)>5]
+blogs10 <- sample(blogs.file10, sampl.size)
+
+# corpus
+blogsl.corp <- corpus(blogsl)
+blogs5.corp <- corpus(blogs5)
+blogs10.corp <- corpus(blogs10)
+
+# document feature matrix
+blogsl.dfm <- dfm(blogsl.corp, stem=TRUE, verbose=FALSE)
+blogs5.dfm <- dfm(blogs5.corp, stem=TRUE, verbose=FALSE)
+blogs10.dfm <- dfm(blogs10.corp, stem=TRUE, verbose=FALSE)
+
+# most common words
+blogsl.top <- topfeatures(blogsl.dfm, 200)
+blogs5.top <- topfeatures(blogs5.dfm, 200)
+blogs10.top <- topfeatures(blogs10.dfm, 200)
+blogsl.top.df <- data.frame(word=attributes(blogsl.top)$names, count.large=blogsl.top, stringsAsFactors=FALSE)
+blogsl.top.df$rank.large <- 1:200
+blogs5.top.df <- data.frame(word=attributes(blogs5.top)$names, count.5=blogs5.top, stringsAsFactors=FALSE)
+blogs5.top.df$rank.5 <- 1:200
+blogs10.top.df <- data.frame(word=attributes(blogs10.top)$names, count.10=blogs10.top, stringsAsFactors=FALSE)
+blogs10.top.df$rank.10 <- 1:200
+blogs.df <- blogs5.top.df %>% full_join(blogs10.top.df) %>% full_join(blogsl.top.df)
+blogs.df$rank.sum <- blogs.df$rank.5 + blogs.df$rank.10 + blogs.df$rank.large
+blogs.df <- arrange(blogs.df, rank.sum) %>% select(word, rank.5, rank.10, rank.large)
+kable(head(blogs.df, 20), caption="Blogs words ranking")
+```
+
+```{r blogsamples, eval=FALSE}
+# Blogs samples
+
+print("Sample documents from blogs with 5 or less words :")
+blogs5[100:119]
+print("Sample documents from blogs with 6 to 10 words :")
+blogs10[100:119]
+print("Sample documents from blogs with over 10 words :")
+blogsl[100:119]
+```
