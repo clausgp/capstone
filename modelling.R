@@ -1,6 +1,6 @@
 # modelling
 
-library(quanteda)
+# library(quanteda)
 library(text2vec)
 library(stringi)
 library(data.table)
@@ -94,12 +94,13 @@ dtm <- create_dtm(it, vectorizer)
 blogs.sent <- blogs.file %>%
     stri_split_boundaries(type="sentence") %>% unlist() %>% 
     stri_replace_all("", regex="[^a-zA-Z ]") %>%
-    stri_replace_all(" ", regex=" +") %>% 
-    tolower() %>% stri_trim_right()
+    stri_replace_all("", regex="\\b(http|www).+\\b") %>% 
+    stri_replace_all(" ", regex=" +") %>%
+    tolower() %>% stri_trim_both()
 it <- itoken(blogs.sent)
-vocab <- create_vocabulary(it, ngram=c(1L, 1L))
-b.udt <- vocab$vocab
-setorder(b.udt, -terms_counts)
+vocab <- create_vocabulary(it, ngram=c(4L, 4L))
+b.fdt <- vocab$vocab
+setorder(b.fdt, terms)
 
 vocab$vocab <- vocab$vocab[doc_counts>1]
 vocab$vocab[1:30]
@@ -110,23 +111,25 @@ vocab.dt <- vocab$vocab[doc_counts>4]
 twit.sent <- twitter.file %>%
     stri_split_boundaries(type="sentence") %>% unlist() %>% 
     stri_replace_all("", regex="[^a-zA-Z ]") %>%
+    stri_replace_all("", regex="\\b(http|www).+\\b") %>%
     stri_replace_all(" ", regex=" +") %>% 
-    tolower() %>% stri_trim_right()
+    tolower() %>% stri_trim_both()
 it <- itoken(twit.sent)
-vocab <- create_vocabulary(it, ngram=c(3L, 3L))
-t.tdt <- vocab$vocab
-setorder(t.tdt, -terms_counts)
+vocab <- create_vocabulary(it, ngram=c(2L, 2L))
+t.bdt <- vocab$vocab
+setorder(t.bdt, -terms)
 
 # news
 news.sent <- news.file %>%
     stri_split_boundaries(type="sentence") %>% unlist() %>% 
     stri_replace_all("", regex="[^a-zA-Z ]") %>%
+    stri_replace_all("", regex="\\b(http|www).+\\b") %>%
     stri_replace_all(" ", regex=" +") %>% 
-    tolower() %>% stri_trim_right()
+    tolower() %>% stri_trim_both()
 it <- itoken(news.sent)
-vocab <- create_vocabulary(it, ngram=c(3L, 3L))
-n.tdt <- vocab$vocab
-setorder(n.tdt, -terms_counts)
+vocab <- create_vocabulary(it, ngram=c(4L, 4L))
+n.fdt <- vocab$vocab
+setorder(n.fdt, -terms)
 
 
 
@@ -149,6 +152,7 @@ object_size(tdt)
 save(b.udt, file="budt.Rda")
 save(b.bdt, file="bbdt.Rda")
 save(b.tdt, file="btdt.Rda")
+save(b.fdt, file="bfdt.Rda")
 
 # twitter
 save(t.udt, file="tudt.Rda")
@@ -159,3 +163,4 @@ save(t.tdt, file="ttdt.Rda")
 save(n.udt, file="nudt.Rda")
 save(n.bdt, file="nbdt.Rda")
 save(n.tdt, file="ntdt.Rda")
+save(n.fdt, file="nfdt.Rda")
