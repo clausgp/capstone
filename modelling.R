@@ -98,11 +98,12 @@ blogs.sent <- blogs.file %>%
     stri_replace_all(" ", regex=" +") %>%
     tolower() %>% stri_trim_both()
 it <- itoken(blogs.sent)
-vocab <- create_vocabulary(it, ngram=c(4L, 4L))
-b.fdt <- vocab$vocab
-setorder(b.fdt, terms)
-
+vocab <- create_vocabulary(it, ngram=c(5L, 5L))
 vocab$vocab <- vocab$vocab[doc_counts>1]
+
+b.qdt <- vocab$vocab
+setorder(b.qdt, terms)
+
 vocab$vocab[1:30]
 
 vocab.dt <- vocab$vocab[doc_counts>4]
@@ -127,9 +128,10 @@ news.sent <- news.file %>%
     stri_replace_all(" ", regex=" +") %>% 
     tolower() %>% stri_trim_both()
 it <- itoken(news.sent)
-vocab <- create_vocabulary(it, ngram=c(4L, 4L))
-n.fdt <- vocab$vocab
-setorder(n.fdt, -terms)
+vocab <- create_vocabulary(it, ngram=c(5L, 5L))
+vocab$vocab <- vocab$vocab[doc_counts>1]
+n.qdt <- vocab$vocab
+setorder(n.qdt, terms)
 
 
 
@@ -153,6 +155,7 @@ save(b.udt, file="budt.Rda")
 save(b.bdt, file="bbdt.Rda")
 save(b.tdt, file="btdt.Rda")
 save(b.fdt, file="bfdt.Rda")
+save(b.qdt, file="bqdt.Rda")
 
 # twitter
 save(t.udt, file="tudt.Rda")
@@ -164,3 +167,4 @@ save(n.udt, file="nudt.Rda")
 save(n.bdt, file="nbdt.Rda")
 save(n.tdt, file="ntdt.Rda")
 save(n.fdt, file="nfdt.Rda")
+save(n.qdt, file="nqdt.Rda")

@@ -105,3 +105,32 @@ fdt$terms <- NULL
 setorder(fdt, term_1, -terms_counts)
 
 save(fdt, file="fdt.Rda")
+
+
+# join 5 grams
+
+load("bqdt.Rda")
+# b.qdt <- b.qdt[terms_counts>1]
+load("nqdt.Rda")
+# n.qdt <- n.qdt[terms_counts>1]
+#load("ttdt.Rda")
+
+qdt <- b.qdt %>% rbind(n.qdt) %>%
+    #    rbind(t.qdt) %>%
+    select(terms, terms_counts) %>% group_by(terms) %>%
+    summarise(terms_counts = sum(terms_counts))
+nq.terms <- sum(qdt$terms_counts)
+#setorder(tdt, -terms_counts)
+
+qdt <- qdt[terms_counts>2]
+
+qdt$term_1 <- stri_extract_first(qdt$terms, regex="^[a-z]+_[a-z]+_[a-z]+_[a-z]+(?=_)")
+qdt$last <- stri_extract_last(qdt$terms, regex="(?<=_)[a-z]+$")
+
+qdt$p <- qdt$terms_counts/nq.terms
+qdt$logp <- log(qdt$p)
+qdt$terms <- NULL
+
+setorder(qdt, term_1, -terms_counts)
+
+save(qdt, file="qdt.Rda")
