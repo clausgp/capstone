@@ -62,7 +62,7 @@ predict <- function(ngram, w_1, nr=3, prev=NULL){
     else
         if (ngram > 1)
             ret <- c(ret, predict(ngram-1, stri_extract_last(w_1,
-                                            regex="(?<=^[a-z]{1,100}_)[a-z_]+$"),
+                                            regex="(?<=^[a-z]{1,1000}_)[a-z_]+$"),
                                     nr=nr-ret.len, prev=c(ret, prev)))
     ret
 }

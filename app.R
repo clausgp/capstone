@@ -36,6 +36,7 @@ ui <- shinyUI(
                     actionButton("clear", label="clear text"),
                     textareaInput("txt", "Write sentence", "",
                                  rows=6, cols=35),
+                    div(id="space", rows=4,
                     div(id="nextbuts",
                         h4("Next word guesses : "),
                         actionButton("next1", label=textOutput("next1_label")),
@@ -51,6 +52,7 @@ ui <- shinyUI(
                         actionButton("curr3", label=textOutput("curr3_label")),
                         actionButton("curr4", label=textOutput("curr4_label")),
                         actionButton("curr5", label=textOutput("curr5_label"))
+                    )
                     )
                 )
             )
@@ -127,14 +129,14 @@ server <- shinyServer(function(input, output, session) {
         txt <- input$txt
         if (txt=="" | stri_extract_last(txt, regex=".") == " "){
             hide("currbuts")
-            txt.curr <- c("", "", "", "", "")
+            # txt.curr <- c("", "", "", "", "")
             txt.pred <- txt %>% cleaner() %>% predict.next(nr=5)
             values$pred <- txt.pred
             show("nextbuts")
         }    
         else {
             hide("nextbuts")
-            txt.pred <- c("", "", "", "", "")
+            # txt.pred <- c("", "", "", "", "")
             txt.curr <- txt %>% cleaner() %>% predict.curr(nr=5)
             txt.len <- length(txt.curr)
             if (txt.len<5){
@@ -167,27 +169,27 @@ server <- shinyServer(function(input, output, session) {
                         value = paste0(input$txt, values$pred[5], " "))
     })
     observeEvent(input$curr1, {
-        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,100}$)")
+        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,1000}$)")
         updateTextInput(session, "txt",
                         value = paste0(curtxt, values$curr[1], " "))
     })
     observeEvent(input$curr2, {
-        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,100}$)")
+        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,1000}$)")
         updateTextInput(session, "txt",
                         value = paste0(curtxt, values$curr[2], " "))
     })
     observeEvent(input$curr3, {
-        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,100}$)")
+        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,1000}$)")
         updateTextInput(session, "txt",
                         value = paste0(curtxt, values$curr[3], " "))
     })
     observeEvent(input$curr4, {
-        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,100}$)")
+        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,1000}$)")
         updateTextInput(session, "txt",
                         value = paste0(curtxt, values$curr[4], " "))
     })
     observeEvent(input$curr5, {
-        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,100}$)")
+        curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b[\\w]{1,1000}$)")
         updateTextInput(session, "txt",
                         value = paste0(curtxt, values$curr[5], " "))
     })
@@ -195,3 +197,4 @@ server <- shinyServer(function(input, output, session) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+# runApp(display.mode="showcase")
