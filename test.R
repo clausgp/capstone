@@ -24,74 +24,99 @@ cleaner <- function(x){
         stri_extract_all_words() %>% unlist()
 }
 
-predict <- function(ngram, w_1, nr=3, prev=""){
+predict <- function(ngram, w_1, nr=3, prev=NULL){
     if (ngram==1){
-        ret <- udt$terms[1:nr]
+        ret <- udt$terms[1:(nr*2)]
     }
     if (ngram==2){
         ret <- bdt[term_1==w_1, last]
         if (length(ret)==0)
             ret <- predict(1, "", nr, prev)
-        else
-            ret <- ret
     }
     if (ngram==3){
         ret <- tdt[term_1==w_1, last]
         if (length(ret)==0)
             ret <- predict(2, stri_extract_last(w_1, regex="(?<=_)[a-z]+$"), nr, prev)
-        else
-            ret <- ret
     }
     if (ngram==4){
         ret <- fdt[term_1==w_1, last]
         if (length(ret)==0)
             ret <- predict(3, stri_extract_last(w_1, regex="(?<=_)[a-z]+_[a-z]+$"),
                            nr, prev)
-        else
-            ret <- ret
     }
     if (ngram==5){
         ret <- qdt[term_1==w_1, last]
         if (length(ret)==0)
             ret <- predict(4, stri_extract_last(w_1, regex="(?<=_)[a-z]+_[a-z]+_[a-z]+$"),
                            nr, prev)
-        else
-            ret <- ret
     }
-    ret <- gsub(x=ret, pattern=paste(prev, collapse="|"), replacement="",
-                 ignore.case=TRUE)
-    ret <- ret[ret!=""]
-    ret.nr <- length(ret)
-    if (ret.nr>=nr)
+    if (!is.null(prev)){
+        ret <- ret[!ret %in% prev]
+        # ret <- gsub(x=ret, pattern=paste(prev, collapse="|"), replacement="",
+        #             ignore.case=TRUE)
+        # ret <- ret[ret!=""]    
+    }
+    ret.len <- length(ret)
+    if (ret.len >= nr)
         ret <- ret[1:nr]
     else
-        if (ngram>1)
+        if (ngram > 1)
             ret <- c(ret, predict(ngram-1, stri_extract_last(w_1,
                                             regex="(?<=^[a-z]{1,100}_)[a-z_]+$"),
-                                    nr=nr-ret.nr, prev=ret))
+                                    nr=nr-ret.len, prev=c(ret, prev)))
     ret
 }
-predict.next <- function(x, nr.out=3){
+predict.next <- function(x, nr=3){
 # x cleaned with cleaner
-    i = length(x)
-    if (i==1){
-        ngram <- i+1
-        w_1 <- x
-    }
-    if (i==2){
-        ngram <- i+1
-        w_1 <- paste(x[i-1], x[i], sep="_")
-    }
-    if (i==3){
-        ngram <- i+1
-        w_1 <- paste(x[i-2], x[i-1], x[i], sep="_")
-    }
-    if (i>3){
+    x.len = length(x)
+    if (x.len > 3)
         ngram <- 5
-        w_1 <- paste(x[i-3], x[i-2], x[i-1], x[i], sep="_")
+    else
+        ngram <- x.len + 1
+    if (x.len==1)
+        w_1 <- x
+    if (x.len==2)
+        w_1 <- paste(x[x.len-1], x[x.len], sep="_")
+    if (x.len==3)
+        w_1 <- paste(x[x.len-2], x[x.len-1], x[x.len], sep="_")
+    if (x.len>3)
+        w_1 <- paste(x[x.len-3], x[x.len-2], x[x.len-1], x[x.len], sep="_")
+    predict(ngram, w_1, nr=nr)
+}
+predict.curr <- function(x, nr=3, prev=NULL){
+# x cleaned with cleaner
+    x.len = length(x)
+    if (x.len==1){
+        ret <- stri_subset_regex(udt$terms, pattern=paste0("^", x[1]))
     }
-    predict(ngram, w_1, nr=nr.out)
-        
+    if (x.len==2){
+        ret <- stri_subset_regex(bdt[term_1==x[1], last], pattern=paste0("^", x[2]))
+    }
+    if (x.len==3){
+        ret <- stri_subset_regex(tdt[term_1==paste(x[1], x[2], sep="_"), last],
+                          pattern=paste0("^", x[3]))
+    }
+    if (x.len==4){
+        ret <- stri_subset_regex(fdt[term_1==paste(x[1], x[2], x[3], sep="_"), last],
+                          pattern=paste0("^", x[4]))
+    }
+    if (x.len>4){
+        y <- x[(x.len-5+1):x.len]
+        ret <- stri_subset_regex(qdt[term_1==paste(y[1], y[2], y[3], y[4], sep="_"),
+                                     last], pattern=paste0("^", y[5]))
+    }
+    if (is.na(ret[1]) & x.len > 1)
+        ret <- predict.curr(x[-1], nr=nr, prev=prev)
+    if (!is.null(prev)){
+        ret <- ret[!ret %in% prev]
+        ret <- c(prev, ret)
+    }
+    ret.len <- length(ret)
+    if (ret.len >= nr)
+        ret <- ret[1:nr]
+    else if (x.len > 1)
+        ret <- predict.curr(x[-1], nr=nr, prev=ret)
+    ret
 }
 predict.sentence <- function(x, type="char"){
 # x cleaned with cleaner
@@ -130,7 +155,7 @@ predict.sentence <- function(x, type="char"){
 }
 
 
-instr <- "this i4s a test, string"
+# instr <- "this i4s a test, string"
 # instr <- blogs.file[3]
 # instr <- cleaner(instr)
 # predicter(instr)
