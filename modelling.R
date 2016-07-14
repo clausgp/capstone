@@ -59,7 +59,7 @@ save(news.test, file="news_test.Rda")
 # text2vec
 load("blogs_train.Rda")
 blogs <- blogs.train %>%
-    # stri_split_boundaries(type="sentence") %>% unlist() %>% 
+    stri_split_boundaries(type="sentence") %>% unlist() %>% 
     stri_replace_all("", regex="[^a-zA-Z ]") %>%
     stri_replace_all("", regex="\\b(http|www).+\\b") %>% 
     stri_replace_all(" ", regex=" +") %>%
@@ -75,7 +75,7 @@ setorder(b.qdt, terms)
 # twitter
 load("twitter_train.Rda")
 twit <- twitter.train %>%
-    # stri_split_boundaries(type="sentence") %>% unlist() %>% 
+    stri_split_boundaries(type="sentence") %>% unlist() %>% 
     stri_replace_all("", regex="[^a-zA-Z ]") %>%
     stri_replace_all("", regex="\\b(http|www).+\\b") %>%
     stri_replace_all(" ", regex=" +") %>% 
@@ -91,7 +91,7 @@ setorder(t.qdt, terms)
 # news
 load("news_train.Rda")
 news <- news.train %>%
-    # stri_split_boundaries(type="sentence") %>% unlist() %>% 
+    stri_split_boundaries(type="sentence") %>% unlist() %>% 
     stri_replace_all("", regex="[^a-zA-Z ]") %>%
     stri_replace_all("", regex="\\b(http|www).+\\b") %>%
     stri_replace_all(" ", regex=" +") %>% 
@@ -119,6 +119,8 @@ save(b.bdt, file="bbdt.Rda")
 save(b.tdt, file="btdt.Rda")
 save(b.fdt, file="bfdt.Rda")
 save(b.qdt, file="bqdt.Rda")
+save(b.sdt, file="bsdt.Rda")
+save(b.spdt, file="bspdt.Rda")
 
 # twitter
 save(t.udt, file="tudt.Rda")
@@ -126,6 +128,8 @@ save(t.bdt, file="tbdt.Rda")
 save(t.tdt, file="ttdt.Rda")
 save(t.fdt, file="tfdt.Rda")
 save(t.qdt, file="tqdt.Rda")
+save(t.sdt, file="tsdt.Rda")
+save(t.spdt, file="tspdt.Rda")
 
 # news
 save(n.udt, file="nudt.Rda")
@@ -133,3 +137,5 @@ save(n.bdt, file="nbdt.Rda")
 save(n.tdt, file="ntdt.Rda")
 save(n.fdt, file="nfdt.Rda")
 save(n.qdt, file="nqdt.Rda")
+save(n.sdt, file="nsdt.Rda")
+save(n.spdt, file="nspdt.Rda")

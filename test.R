@@ -7,6 +7,7 @@ load("bdt.Rda")
 load("tdt.Rda")
 load("fdt.Rda")
 load("qdt.Rda")
+load("sdt.Rda")
 
 #setorder(udt, -terms_counts)
 #setkey(tdt, term_1, terms_counts)
@@ -50,6 +51,12 @@ predict <- function(ngram, w_1, nr=3, prev=NULL){
             ret <- predict(4, stri_extract_last(w_1, regex="(?<=_)[a-z]+_[a-z]+_[a-z]+$"),
                            nr, prev)
     }
+    if (ngram==6){
+        ret <- sdt[term_1==w_1, last]
+        if (length(ret)==0)
+            ret <- predict(5, stri_extract_last(w_1, regex="(?<=_)[a-z]+_[a-z]+_[a-z]+_[a-z]+$"),
+                           nr, prev)
+    }
     if (!is.null(prev)){
         ret <- ret[!ret %in% prev]
         # ret <- gsub(x=ret, pattern=paste(prev, collapse="|"), replacement="",
@@ -69,8 +76,8 @@ predict <- function(ngram, w_1, nr=3, prev=NULL){
 predict.next <- function(x, nr=3){
 # x cleaned with cleaner
     x.len = length(x)
-    if (x.len > 3)
-        ngram <- 5
+    if (x.len > 4)
+        ngram <- 6
     else
         ngram <- x.len + 1
     if (x.len==1)
@@ -79,8 +86,10 @@ predict.next <- function(x, nr=3){
         w_1 <- paste(x[x.len-1], x[x.len], sep="_")
     if (x.len==3)
         w_1 <- paste(x[x.len-2], x[x.len-1], x[x.len], sep="_")
-    if (x.len>3)
+    if (x.len==4)
         w_1 <- paste(x[x.len-3], x[x.len-2], x[x.len-1], x[x.len], sep="_")
+    if (x.len>4)
+        w_1 <- paste(x[x.len-4], x[x.len-3], x[x.len-2], x[x.len-1], x[x.len], sep="_")
     predict(ngram, w_1, nr=nr)
 }
 predict.curr <- function(x, nr=3, prev=NULL){
@@ -100,10 +109,14 @@ predict.curr <- function(x, nr=3, prev=NULL){
         ret <- stri_subset_regex(fdt[term_1==paste(x[1], x[2], x[3], sep="_"), last],
                           pattern=paste0("^", x[4]))
     }
-    if (x.len>4){
-        y <- x[(x.len-5+1):x.len]
-        ret <- stri_subset_regex(qdt[term_1==paste(y[1], y[2], y[3], y[4], sep="_"),
-                                     last], pattern=paste0("^", y[5]))
+    if (x.len==5){
+        ret <- stri_subset_regex(qdt[term_1==paste(x[1], x[2], x[3], x[4], sep="_"), last],
+                                 pattern=paste0("^", x[5]))
+    }
+    if (x.len>5){
+        y <- x[(x.len-6+1):x.len]
+        ret <- stri_subset_regex(qdt[term_1==paste(y[1], y[2], y[3], y[4], y[5], sep="_"),
+                                     last], pattern=paste0("^", y[6]))
     }
     if (is.na(ret[1]) & x.len > 1)
         ret <- predict.curr(x[-1], nr=nr, prev=prev)
@@ -138,9 +151,13 @@ predict.sentence <- function(x, type="char"){
             ngram <- i
             w_1 <- paste(x[i-3], x[i-2], x[i-1], sep="_")
         }
-        if (i>4){
-            ngram <- 5
+        if (i==5){
+            ngram <- i
             w_1 <- paste(x[i-4], x[i-3], x[i-2], x[i-1], sep="_")
+        }
+        if (i>5){
+            ngram <- 6
+            w_1 <- paste(x[i-5], x[i-4], x[i-3], x[i-2], x[i-1], sep="_")
         }
         if (length(outstr)==0)
             outstr <- predict(ngram, w_1)

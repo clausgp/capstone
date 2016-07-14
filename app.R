@@ -1,6 +1,7 @@
 
 library(shiny)
 library(shinyjs)
+library(markdown)
 
 source("test.R")
 
