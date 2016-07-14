@@ -8,12 +8,12 @@ load("tdt.Rda")
 load("fdt.Rda")
 load("qdt.Rda")
 
-setorder(udt, -terms_counts)
-setkey(tdt, term_1, terms_counts)
-setorder(bdt, term_1, -terms_counts)
-setorder(tdt, term_1, -terms_counts)
-setorder(fdt, term_1, -terms_counts)
-setorder(qdt, term_1, -terms_counts)
+#setorder(udt, -terms_counts)
+#setkey(tdt, term_1, terms_counts)
+#setorder(bdt, term_1, -terms_counts)
+#setorder(tdt, term_1, -terms_counts)
+#setorder(fdt, term_1, -terms_counts)
+#setorder(qdt, term_1, -terms_counts)
 
 cleaner <- function(x){
     x %>% unlist() %>% 

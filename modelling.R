@@ -1,6 +1,5 @@
-# modelling
+# modelling - ngrams for each file blogs/twitter/news are generated
 
-# library(quanteda)
 library(text2vec)
 library(stringi)
 library(data.table)
@@ -9,9 +8,9 @@ library(dplyr)
 library(pryr)
 library(rbenchmark)
 
-setwd("Rwork\\coursera data science specialization\\capstone")
+# setwd("Rwork\\coursera data science specialization\\capstone")
 
-# only using blogs for now
+# blogs
 blogs.file <- readLines("final/en_US/en_US.blogs.txt", encoding="UTF-8")
 blogs.file <- blogs.file[stri_count_words(blogs.file)>=5]
 blogs.file <- iconv(blogs.file, from="UTF-8", to="ASCII", sub="")
@@ -28,112 +27,82 @@ close(tmp)
 news.file <- news.file[stri_count_words(news.file)>=5]
 news.file <- iconv(news.file, from="UTF-8", to="ASCII", sub="")
 
-pct <- 0.5
+# split into train and test
+pct <- 0.9
 set.seed(1234)
-blogs <- sample(blogs.file, pct*length(blogs.file))
+# blogs
+sample_size <- floor(pct*length(blogs.file))
+train_ind <- sample(seq_len(length(blogs.file)), sample_size)
+blogs.train <- blogs.file[train_ind]
+blogs.test <- blogs.file[-train_ind]
+save(blogs.train, file="blogs_train.Rda")
+save(blogs.test, file="blogs_test.Rda")
+# twitter
+sample_size <- floor(pct*length(twitter.file))
+train_ind <- sample(seq_len(length(twitter.file)), sample_size)
+twitter.train <- twitter.file[train_ind]
+twitter.test <- twitter.file[-train_ind]
+save(twitter.train, file="twitter_train.Rda")
+save(twitter.test, file="twitter_test.Rda")
+# news
+sample_size <- floor(pct*length(news.file))
+train_ind <- sample(seq_len(length(news.file)), sample_size)
+news.train <- news.file[train_ind]
+news.test <- news.file[-train_ind]
+save(news.train, file="news_train.Rda")
+save(news.test, file="news_test.Rda")
 
-blogs.corp <- corpus(blogs)
+# terminate R/close open R again, and jump to this part
 
-# unigram
-bdfm <- dfm(blogs.corp, ngrams=1, concatenator=" ")
-nf <- bdfm@Dim[2]
-bf <- topfeatures(bdfm, n=nf)
-sf <- sum(bf)
-udt <- data.table(f=attributes(bf)$names, n=as.integer(bf))
-setkey(udt, f, n)
-udt$pct <- udt$n/sf
-
-# bigram
-bdfm <- dfm(blogs.corp, ngrams=2, concatenator=" ")
-nf <- bdfm@Dim[2]
-bf <- topfeatures(bdfm, n=nf)
-sf <- sum(bf)
-bdt <- data.table(f=attributes(bf)$names, n=as.integer(bf))
-bdt$first <- stri_extract_first(bdt$f, regex="^\\S+(?= )")
-bdt$last <- stri_extract_last(bdt$f, regex="(?<= )\\S+$")
-setkey(bdt, f, first, last, n)
-bdt$s <- bdt$n/udt[bdt$first,n]
-
-# trigram
-bdfm <- dfm(blogs.corp, ngrams=3, concatenator=" ")
-nf <- bdfm@Dim[2]
-bf <- topfeatures(bdfm, n=nf)
-sf <- sum(bf)
-tdt <- data.table(f=attributes(bf)$names, n=as.integer(bf))
-tdt$first <- stri_extract_first(tdt$f, regex="^\\S+ \\S+(?= )")
-tdt$last <- stri_extract_last(tdt$f, regex="(?<= )\\S+$")
-setkey(tdt, f, first, last, n)
-tdt$s <- tdt$n/bdt[tdt$first, n]
-
-# rewrite this!!
-# testing
-tdt.test <- tdt[1:100]
-benchmark(t1 <- tdt.test$n/sapply(tdt.test$first, function(x) bdt$n[bdt$f==x]), t2 <- tdt.test[,n]/bdt[tdt.test[,first],n])
-tdt$s <- tdt$n/sapply(tdt$first, function(x) bdt$n[bdt$f==x])
-
-
-
+# ngrams are made 1 at a time, terminate and restart R when memory runs low
 
 # text2vec
-# tokenize from quanteda to clean before 
-blogs.q <- tokenize(blogs, removeNumbers=TRUE, removePunct=TRUE, removeSymbols=TRUE, removeTwitter=TRUE, removeHyphens=TRUE)
-it <- itoken(blogs.q, 
-             preprocess_function = tolower, 
-             tokenizer = word_tokenizer)
-vocab <- create_vocabulary(it, ngram=c(2L, 3L))
-vocab.dt <- data.table(vocab$vocab)
-# setkey(vocab.dt, terms_counts)
-setorder(vocab.dt, -terms_counts)
-
-
-vectorizer <- vocab_vectorizer(vocab)
-dtm <- create_dtm(it, vectorizer)
-
-# try 2
-#blogs.sent <- unlist(stri_split_boundaries(blogs, type="sentence", simplify=TRUE))
-blogs.sent <- blogs.file %>%
-    stri_split_boundaries(type="sentence") %>% unlist() %>% 
+load("blogs_train.Rda")
+blogs <- blogs.train %>%
+    # stri_split_boundaries(type="sentence") %>% unlist() %>% 
     stri_replace_all("", regex="[^a-zA-Z ]") %>%
     stri_replace_all("", regex="\\b(http|www).+\\b") %>% 
     stri_replace_all(" ", regex=" +") %>%
     tolower() %>% stri_trim_both()
-it <- itoken(blogs.sent)
+rm(blogs.train)
+# manually change ngram, and b.*dt at each ngram generation. doc_counts>1 from ngram>=3
+it <- itoken(blogs)
 vocab <- create_vocabulary(it, ngram=c(5L, 5L))
 vocab$vocab <- vocab$vocab[doc_counts>1]
-
 b.qdt <- vocab$vocab
 setorder(b.qdt, terms)
 
-vocab$vocab[1:30]
-
-vocab.dt <- vocab$vocab[doc_counts>4]
-
 # twitter
-twit.sent <- twitter.file %>%
-    stri_split_boundaries(type="sentence") %>% unlist() %>% 
+load("twitter_train.Rda")
+twit <- twitter.train %>%
+    # stri_split_boundaries(type="sentence") %>% unlist() %>% 
     stri_replace_all("", regex="[^a-zA-Z ]") %>%
     stri_replace_all("", regex="\\b(http|www).+\\b") %>%
     stri_replace_all(" ", regex=" +") %>% 
     tolower() %>% stri_trim_both()
-it <- itoken(twit.sent)
-vocab <- create_vocabulary(it, ngram=c(2L, 2L))
-t.bdt <- vocab$vocab
-setorder(t.bdt, -terms)
+rm(twitter.train)
+# manually change ngram, and t.*dt at each ngram generation. doc_counts>1 from ngram>=3
+it <- itoken(twit)
+vocab <- create_vocabulary(it, ngram=c(5L, 5L))
+vocab$vocab <- vocab$vocab[doc_counts>1]
+t.qdt <- vocab$vocab
+setorder(t.qdt, terms)
 
 # news
-news.sent <- news.file %>%
-    stri_split_boundaries(type="sentence") %>% unlist() %>% 
+load("news_train.Rda")
+news <- news.train %>%
+    # stri_split_boundaries(type="sentence") %>% unlist() %>% 
     stri_replace_all("", regex="[^a-zA-Z ]") %>%
     stri_replace_all("", regex="\\b(http|www).+\\b") %>%
     stri_replace_all(" ", regex=" +") %>% 
     tolower() %>% stri_trim_both()
-it <- itoken(news.sent)
+rm(news.train)
+# manually change ngram, and n.*dt at each ngram generation. doc_counts>1 from ngram>=3
+it <- itoken(news)
 vocab <- create_vocabulary(it, ngram=c(5L, 5L))
 vocab$vocab <- vocab$vocab[doc_counts>1]
 n.qdt <- vocab$vocab
 setorder(n.qdt, terms)
-
-
 
 head(udt,10)
 object_size(udt)
@@ -143,12 +112,6 @@ object_size(bdt)
 
 head(tdt,10)
 object_size(tdt)
-
-# bf <- topfeatures(bdfm, n=bdfm@Dim[2])
-# dbf <- data.frame(f=attributes(bf), n=bf, row.names=NULL)
-# dbf <- data.table(f=attributes(bf)$names, n=bf)
-# dbf$first <- stri_extract_first(dbf$f, regex="^\\S+ \\S+(?= )")
-# dbf$last <- stri_extract_last(dbf$f, regex="(?<= )\\S+$")
 
 # blogs
 save(b.udt, file="budt.Rda")
@@ -161,6 +124,8 @@ save(b.qdt, file="bqdt.Rda")
 save(t.udt, file="tudt.Rda")
 save(t.bdt, file="tbdt.Rda")
 save(t.tdt, file="ttdt.Rda")
+save(t.fdt, file="tfdt.Rda")
+save(t.qdt, file="tqdt.Rda")
 
 # news
 save(n.udt, file="nudt.Rda")
