@@ -1,178 +1,78 @@
-library(data.table)
-library(stringi)
-library(dplyr)
+# testing the trained model from the 10% test data
 
-load("udt.Rda")
-load("bdt.Rda")
-load("tdt.Rda")
-load("fdt.Rda")
-load("qdt.Rda")
-load("sdt.Rda")
+source("predict.R")
 
-#setorder(udt, -terms_counts)
-#setkey(tdt, term_1, terms_counts)
-#setorder(bdt, term_1, -terms_counts)
-#setorder(tdt, term_1, -terms_counts)
-#setorder(fdt, term_1, -terms_counts)
-#setorder(qdt, term_1, -terms_counts)
+load("blogs_test.Rda")
+load("twitter_test.Rda")
+load("news_test.Rda")
 
-cleaner <- function(x){
-    x %>% unlist() %>% 
-        stri_replace_all("", regex="[^a-zA-Z ]") %>%
-        stri_replace_all("", regex="\\b(http|www).+\\b") %>% 
-        stri_replace_all(" ", regex=" +") %>%
-        tolower() %>% stri_trim_both()%>% 
-        stri_extract_all_words() %>% unlist()
+# blogs.test
+# blogs.test <- blogs.test[1:100]
+b.len <- length(blogs.test)
+blogs.df <- data.frame(text=blogs.test, last=rep("", b.len), pred=rep("", b.len),
+                 s1=rep(FALSE, b.len), s3=rep(FALSE, b.len), s5=rep(FALSE, b.len),
+                 stringsAsFactors = FALSE)
+for (i in seq_len(b.len)){
+    txt <- clean(blogs.df$text[i])
+    txt.len <- length(txt)
+    blogs.df$last[i] <- txt[txt.len]
+    predicts <- predict.next(txt[-txt.len], nr=5)
+    blogs.df$pred[i] <- predicts[1]
+    blogs.df$s1[i] <- blogs.df$last[i] %in% predicts[1]
+    blogs.df$s3[i] <- blogs.df$last[i] %in% predicts[1:3]
+    blogs.df$s5[i] <- blogs.df$last[i] %in% predicts[1:5]
 }
-
-predict <- function(ngram, w_1, nr=3, prev=NULL){
-    if (ngram==1){
-        ret <- udt$terms[1:(nr*2)]
-    }
-    if (ngram==2){
-        ret <- bdt[term_1==w_1, last]
-        if (length(ret)==0)
-            ret <- predict(1, "", nr, prev)
-    }
-    if (ngram==3){
-        ret <- tdt[term_1==w_1, last]
-        if (length(ret)==0)
-            ret <- predict(2, stri_extract_last(w_1, regex="(?<=_)[a-z]+$"), nr, prev)
-    }
-    if (ngram==4){
-        ret <- fdt[term_1==w_1, last]
-        if (length(ret)==0)
-            ret <- predict(3, stri_extract_last(w_1, regex="(?<=_)[a-z]+_[a-z]+$"),
-                           nr, prev)
-    }
-    if (ngram==5){
-        ret <- qdt[term_1==w_1, last]
-        if (length(ret)==0)
-            ret <- predict(4, stri_extract_last(w_1, regex="(?<=_)[a-z]+_[a-z]+_[a-z]+$"),
-                           nr, prev)
-    }
-    if (ngram==6){
-        ret <- sdt[term_1==w_1, last]
-        if (length(ret)==0)
-            ret <- predict(5, stri_extract_last(w_1, regex="(?<=_)[a-z]+_[a-z]+_[a-z]+_[a-z]+$"),
-                           nr, prev)
-    }
-    if (!is.null(prev)){
-        ret <- ret[!ret %in% prev]
-        # ret <- gsub(x=ret, pattern=paste(prev, collapse="|"), replacement="",
-        #             ignore.case=TRUE)
-        # ret <- ret[ret!=""]    
-    }
-    ret.len <- length(ret)
-    if (ret.len >= nr)
-        ret <- ret[1:nr]
-    else
-        if (ngram > 1)
-            ret <- c(ret, predict(ngram-1, stri_extract_last(w_1,
-                                            regex="(?<=^[a-z]{1,1000}_)[a-z_]+$"),
-                                    nr=nr-ret.len, prev=c(ret, prev)))
-    ret
-}
-predict.next <- function(x, nr=3){
-# x cleaned with cleaner
-    x.len = length(x)
-    if (x.len > 4)
-        ngram <- 6
-    else
-        ngram <- x.len + 1
-    if (x.len==1)
-        w_1 <- x
-    if (x.len==2)
-        w_1 <- paste(x[x.len-1], x[x.len], sep="_")
-    if (x.len==3)
-        w_1 <- paste(x[x.len-2], x[x.len-1], x[x.len], sep="_")
-    if (x.len==4)
-        w_1 <- paste(x[x.len-3], x[x.len-2], x[x.len-1], x[x.len], sep="_")
-    if (x.len>4)
-        w_1 <- paste(x[x.len-4], x[x.len-3], x[x.len-2], x[x.len-1], x[x.len], sep="_")
-    predict(ngram, w_1, nr=nr)
-}
-predict.curr <- function(x, nr=3, prev=NULL){
-# x cleaned with cleaner
-    x.len = length(x)
-    if (x.len==1){
-        ret <- stri_subset_regex(udt$terms, pattern=paste0("^", x[1]))
-    }
-    if (x.len==2){
-        ret <- stri_subset_regex(bdt[term_1==x[1], last], pattern=paste0("^", x[2]))
-    }
-    if (x.len==3){
-        ret <- stri_subset_regex(tdt[term_1==paste(x[1], x[2], sep="_"), last],
-                          pattern=paste0("^", x[3]))
-    }
-    if (x.len==4){
-        ret <- stri_subset_regex(fdt[term_1==paste(x[1], x[2], x[3], sep="_"), last],
-                          pattern=paste0("^", x[4]))
-    }
-    if (x.len==5){
-        ret <- stri_subset_regex(qdt[term_1==paste(x[1], x[2], x[3], x[4], sep="_"), last],
-                                 pattern=paste0("^", x[5]))
-    }
-    if (x.len>5){
-        y <- x[(x.len-6+1):x.len]
-        ret <- stri_subset_regex(qdt[term_1==paste(y[1], y[2], y[3], y[4], y[5], sep="_"),
-                                     last], pattern=paste0("^", y[6]))
-    }
-    if (is.na(ret[1]) & x.len > 1)
-        ret <- predict.curr(x[-1], nr=nr, prev=prev)
-    if (!is.null(prev)){
-        ret <- ret[!ret %in% prev]
-        ret <- c(prev, ret)
-    }
-    ret.len <- length(ret)
-    if (ret.len >= nr)
-        ret <- ret[1:nr]
-    else if (x.len > 1)
-        ret <- predict.curr(x[-1], nr=nr, prev=ret)
-    ret
-}
-predict.sentence <- function(x, type="char"){
-# x cleaned with cleaner
-    outstr <- character(0)
-    for (i in start:length(x)){
-        if (i==1){
-            ngram <- i
-            w_1 <- ""
-        }
-        if (i==2){
-            ngram <- i
-            w_1 <- x[i-1]
-        }
-        if (i==3){
-            ngram <- i
-            w_1 <- paste(x[i-2], x[i-1], sep="_")
-        }
-        if (i==4){
-            ngram <- i
-            w_1 <- paste(x[i-3], x[i-2], x[i-1], sep="_")
-        }
-        if (i==5){
-            ngram <- i
-            w_1 <- paste(x[i-4], x[i-3], x[i-2], x[i-1], sep="_")
-        }
-        if (i>5){
-            ngram <- 6
-            w_1 <- paste(x[i-5], x[i-4], x[i-3], x[i-2], x[i-1], sep="_")
-        }
-        if (length(outstr)==0)
-            outstr <- predict(ngram, w_1)
-        else
-            outstr <- paste(outstr, predict(ngram, w_1))
-        #print(paste(i, ngram, w_1, outstr))
-    }
-    if (type=="char")
-        outstr
-    else
-        data.frame(i=x, o=outstr %>% stri_extract_all_words() %>% unlist())
-}
+sum(blogs.df$s1)/b.len
+sum(blogs.df$s3)/b.len
+sum(blogs.df$s5)/b.len
 
 
-# instr <- "this i4s a test, string"
-# instr <- blogs.file[3]
-# instr <- cleaner(instr)
-# predicter(instr)
+# twitter.test
+t.len <- length(twitter.test)
+twit.df <- data.frame(text=twitter.test, last=rep("", t.len), pred=rep("", t.len),
+                 s1=rep(FALSE, t.len), s3=rep(FALSE, t.len), s5=rep(FALSE, t.len),
+                 stringsAsFactors = FALSE)
+for (i in seq_len(t.len)){
+    txt <- clean(twit.df$text[i])
+    txt.len <- length(txt)
+    twit.df$last[i] <- txt[txt.len]
+    predicts <- predict.next(txt[-txt.len], nr=5)
+    twit.df$pred[i] <- predicts[1]
+    twit.df$s1[i] <- twit.df$last[i] %in% predicts[1]
+    twit.df$s3[i] <- twit.df$last[i] %in% predicts[1:3]
+    twit.df$s5[i] <- twit.df$last[i] %in% predicts[1:5]
+}
+sum(twit.df$s1)/t.len
+sum(twit.df$s3)/t.len
+sum(twit.df$s5)/t.len
+
+# news.test
+n.len <- length(news.test)
+news.df <- data.frame(text=news.test, last=rep("", n.len), pred=rep("", n.len),
+                      s1=rep(FALSE, n.len), s3=rep(FALSE, n.len), s5=rep(FALSE, n.len),
+                      stringsAsFactors = FALSE)
+for (i in seq_len(n.len)){
+    txt <- clean(news.df$text[i])
+    txt.len <- length(txt)
+    news.df$last[i] <- txt[txt.len]
+    predicts <- predict.next(txt[-txt.len], nr=5)
+    news.df$pred[i] <- predicts[1]
+    news.df$s1[i] <- news.df$last[i] %in% predicts[1]
+    news.df$s3[i] <- news.df$last[i] %in% predicts[1:3]
+    news.df$s5[i] <- news.df$last[i] %in% predicts[1:5]
+}
+sum(news.df$s1)/n.len
+sum(news.df$s3)/n.len
+sum(news.df$s5)/n.len
+
+test.stats <- data.frame(type=c("blogs", "twitter", "news"),
+                         test.size=c(b.len, t.len, n.len),
+                         s1=c(sum(blogs.df$s1), sum(twit.df$s1), sum(news.df$s1)),
+                         s3=c(sum(blogs.df$s3), sum(twit.df$s3), sum(news.df$s3)),
+                         s5=c(sum(blogs.df$s5), sum(twit.df$s5), sum(news.df$s5)),
+                         stringsAsFactors = FALSE)
+test.stats$s1.pct <- test.stats$s1/test.stats$test.size
+test.stats$s3.pct <- test.stats$s3/test.stats$test.size
+test.stats$s5.pct <- test.stats$s5/test.stats$test.size
+
+save(test.stats, file="test_stats.Rda")

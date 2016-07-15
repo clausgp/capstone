@@ -3,7 +3,7 @@ library(shiny)
 library(shinyjs)
 library(markdown)
 
-source("test.R")
+source("predict.R")
 
 # Steve Ladavich
 textareaInput <- function(id, label="", value="", nrows=20, ncols=35, class="form-control"){
@@ -73,17 +73,16 @@ ui <- shinyUI(
                         actionButton("gprose2", label="generate from second suggestion")
                     ),
                     fluidRow(
-                        actionButton("gproser", label="generate from random top 5 suggestions")
+                        actionButton("gproser", label="generate from random top 3 suggestions")
                     ),
                     p("The 2 first will allways generate the same sentence. ",
                       "The last choice will allways generate a new sentence",
-                      "And its also clear by these generated 'sentences' that my model",
-                      "could really have benefitted by including an end-of-sentence-word,",
-                      "but i was not satisfied with the break into sentences methods i tried",
-                      "so i skipped that part.")
+                      "And its also clear by these long 'sentences' that my model",
+                      "could really have benefitted by including an end-of-sentence-word.",
+                      "This may come in a later iteration.")
                 ),
                 mainPanel(width=7,
-                    textareaInput("prose", "", "", nrows=14, ncols=80)
+                    textareaInput("prose", "", "", nrows=20, ncols=80)
                 )
             )
         ),
@@ -141,7 +140,7 @@ server <- shinyServer(function(input, output, session) {
     #     if (is.null(input$txt) | is.na(input$txt))
     #         ""
     #     else
-    #         cleaner(input$txt)
+    #         clean(input$txt)
     # )
     
     observe({
@@ -153,14 +152,14 @@ server <- shinyServer(function(input, output, session) {
         if (txt=="" | stri_extract_last(txt, regex=".") == " "){
             hide("currbuts")
             # txt.curr <- c("", "", "", "", "")
-            txt.pred <- txt %>% cleaner() %>% predict.next(nr=5)
+            txt.pred <- txt %>% clean() %>% predict.next(nr=5)
             values$pred <- txt.pred
             show("nextbuts")
         }    
         else {
             hide("nextbuts")
             # txt.pred <- c("", "", "", "", "")
-            txt.curr <- txt %>% cleaner() %>% predict.curr(nr=5)
+            txt.curr <- txt %>% clean() %>% predict.curr(nr=5)
             txt.len <- length(txt.curr)
             if (txt.len<5){
                 blank <- rep("", 5-txt.len)
@@ -192,6 +191,8 @@ server <- shinyServer(function(input, output, session) {
                         value = paste0(input$txt, values$pred[5], " "))
     })
     observeEvent(input$curr1, {
+        if (values$curr[1]=="")
+            return()
         curtxt <- stri_extract_first(input$txt, regex="^.*(?=\\b\\w)")
         updateTextInput(session, "txt",
                         value = paste0(curtxt, values$curr[1], " "))
@@ -228,14 +229,14 @@ server <- shinyServer(function(input, output, session) {
     # model-prose
     observeEvent(input$gprose1, {
         txt <- predict.next("", nr=1)
-        while(length(txt)<100){
+        while(length(txt)<162){
             txt <- c(txt, predict.next(txt, nr=1))
         }
         updateTextInput(session, "prose", value = paste(txt, collapse=" "))
     })
     observeEvent(input$gprose2, {
         txt <- predict.next("", nr=2)[2]
-        while(length(txt)<100){
+        while(length(txt)<160){
             txt <- c(txt, predict.next(txt, nr=2)[2])
         }
         updateTextInput(session, "prose", value = paste(txt, collapse=" "))
@@ -243,10 +244,10 @@ server <- shinyServer(function(input, output, session) {
     observeEvent(input$gproser, {
         # Tommy, http://stackoverflow.com/questions/8810338/same-random-numbers-every-time
         set.seed( as.integer((as.double(Sys.time())*1000+Sys.getpid()) %% 2^31) )
-        txt <- predict.next("", nr=5)[sample(1:5, 1, prob=c(5/15, 4/15, 3/15, 2/15, 1/15))]
-        while(length(txt) < 100){
-            txt <- c(txt, predict.next(txt, nr=5)
-                     [sample(1:5, 1, prob=c(5/15, 4/15, 3/15, 2/15, 1/15))])
+        txt <- predict.next("", nr=3)[sample(1:3, 1, prob=c(3/6, 2/6, 1/6))]
+        while(length(txt) < 160){
+            txt <- c(txt, predict.next(txt, nr=3)
+                     [sample(1:3, 1, prob=c(3/6, 2/6, 1/6))])
         }
         updateTextInput(session, "prose", value = paste(txt, collapse=" "))
     })

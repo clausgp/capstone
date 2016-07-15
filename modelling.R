@@ -67,10 +67,10 @@ blogs <- blogs.train %>%
 rm(blogs.train)
 # manually change ngram, and b.*dt at each ngram generation. doc_counts>1 from ngram>=3
 it <- itoken(blogs)
-vocab <- create_vocabulary(it, ngram=c(5L, 5L))
+vocab <- create_vocabulary(it, ngram=c(3L, 3L))
 vocab$vocab <- vocab$vocab[doc_counts>1]
-b.qdt <- vocab$vocab
-setorder(b.qdt, terms)
+b.tdt <- vocab$vocab
+setorder(b.tdt, terms)
 
 # twitter
 load("twitter_train.Rda")
@@ -83,10 +83,10 @@ twit <- twitter.train %>%
 rm(twitter.train)
 # manually change ngram, and t.*dt at each ngram generation. doc_counts>1 from ngram>=3
 it <- itoken(twit)
-vocab <- create_vocabulary(it, ngram=c(5L, 5L))
+vocab <- create_vocabulary(it, ngram=c(3L, 3L))
 vocab$vocab <- vocab$vocab[doc_counts>1]
-t.qdt <- vocab$vocab
-setorder(t.qdt, terms)
+t.tdt <- vocab$vocab
+setorder(t.tdt, terms)
 
 # news
 load("news_train.Rda")
@@ -99,10 +99,10 @@ news <- news.train %>%
 rm(news.train)
 # manually change ngram, and n.*dt at each ngram generation. doc_counts>1 from ngram>=3
 it <- itoken(news)
-vocab <- create_vocabulary(it, ngram=c(5L, 5L))
+vocab <- create_vocabulary(it, ngram=c(3L, 3L))
 vocab$vocab <- vocab$vocab[doc_counts>1]
-n.qdt <- vocab$vocab
-setorder(n.qdt, terms)
+n.tdt <- vocab$vocab
+setorder(n.tdt, terms)
 
 head(udt,10)
 object_size(udt)
@@ -121,6 +121,7 @@ save(b.fdt, file="bfdt.Rda")
 save(b.qdt, file="bqdt.Rda")
 save(b.sdt, file="bsdt.Rda")
 save(b.spdt, file="bspdt.Rda")
+save(b.odt, file="bodt.Rda")
 
 # twitter
 save(t.udt, file="tudt.Rda")
@@ -130,6 +131,7 @@ save(t.fdt, file="tfdt.Rda")
 save(t.qdt, file="tqdt.Rda")
 save(t.sdt, file="tsdt.Rda")
 save(t.spdt, file="tspdt.Rda")
+save(t.odt, file="todt.Rda")
 
 # news
 save(n.udt, file="nudt.Rda")
@@ -139,3 +141,4 @@ save(n.fdt, file="nfdt.Rda")
 save(n.qdt, file="nqdt.Rda")
 save(n.sdt, file="nsdt.Rda")
 save(n.spdt, file="nspdt.Rda")
+save(n.odt, file="nodt.Rda")
