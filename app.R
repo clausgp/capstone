@@ -2,6 +2,7 @@
 library(shiny)
 library(shinyjs)
 library(markdown)
+library(knitr)
 
 source("predict.R")
 
@@ -14,26 +15,25 @@ textareaInput <- function(id, label="", value="", nrows=20, ncols=35, class="for
 }
 
 ui <- shinyUI(
-    
-    # tags$script(HTML("Shiny.addCustomMessageHandler('cursorEnd', function(*message*) {
-    #                  var input = $('#txt');
-    #                  input[0].selectionStart = input[0].selectionEnd = input.val().length;
-    #                  });
-    #                  ")),
-    
     navbarPage("Next word suggestion",
         tabPanel("App",
             useShinyjs(),
             sidebarLayout(
                 sidebarPanel(width=5,
+                    h4("Swiftkey functionality :"),
+                    p("In trying to mimick a mobile keyboard app, i decided not to ",
+                      "include a predict button as suggested in the peer evaluation.",
+                      "Instead the app will do this automaticly as described below.",
+                      "The 'prediction' is also not limited to 1 but gives further ",
+                      "suggestions like a normal keyboard app."),
                     h4("Next word suggestion :"),
-                    "When the last letter in the textbox is a space, ",
-                    "then the next words will be suggested, and shown as the bottoms, ",
-                    "with the left-most being the most often next word.",
+                    p("When the last letter in the textbox is a space, ",
+                      "then the next words will be suggested, and shown as the buttons, ",
+                      "with the left-most being the most often next word."),
                     h4("Current word suggestion :"),
-                    "When the last letter in the textbos is a letter, ",
-                    "the likely continuations will be shown as the bottoms, ",
-                    "with the left-most being the most often continuation."
+                    p("When the last letter in the textbos is a letter, ",
+                      "the likely continuations will be shown as the buttons, ",
+                      "with the left-most being the most often continuation.")
                 ),
                 mainPanel(width=7,
                     actionButton("clear", label="clear text"),
@@ -66,18 +66,12 @@ ui <- shinyUI(
                     h4("Model prose :"),
                     p("Here you can have the model generate the next award winning prose.",
                         "Remember to take a deep breath before starting to read..."),
-                    fluidRow(
-                        actionButton("gprose1", label="generate from first suggestion")
-                        ),
-                    fluidRow(
-                        actionButton("gprose2", label="generate from second suggestion")
-                    ),
-                    fluidRow(
-                        actionButton("gproser", label="generate from random top 3 suggestions")
-                    ),
+                    p(actionButton("gprose1", label="generate from first suggestion")),
+                    p(actionButton("gprose2", label="generate from second suggestion")),
+                    p(actionButton("gproser", label="generate from top 3 suggestions")),
                     p("The 2 first will allways generate the same sentence. ",
-                      "The last choice will allways generate a new sentence",
-                      "And its also clear by these long 'sentences' that my model",
+                      "The last choice will allways randomly generate a new sentence.",
+                      "Its clear by these long 'sentences' that my model",
                       "could really have benefitted by including an end-of-sentence-word.",
                       "This may come in a later iteration.")
                 ),
@@ -87,7 +81,9 @@ ui <- shinyUI(
             )
         ),
         tabPanel("Notes",
-            includeMarkdown("notes.md")
+            # includeMarkdown("notes.md")
+            # uiOutput("notesrmd")
+            includeHTML("notes.html")
         ),
         tabPanel("About the author",
                  includeMarkdown("about.md")
@@ -251,6 +247,11 @@ server <- shinyServer(function(input, output, session) {
         }
         updateTextInput(session, "prose", value = paste(txt, collapse=" "))
     })
+    
+    # Notes
+    # output$notesrmd <- renderUI({
+    #     HTML(markdown::markdownToHTML(knit('notes.Rmd', quiet = TRUE)))
+    # })
 })
 
 # Run the application 
