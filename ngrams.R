@@ -14,10 +14,11 @@ load("tudt.Rda")
 udt <- b.udt %>% rbind(n.udt) %>%
     rbind(t.udt) %>%
     group_by(terms) %>%
-    summarise(terms_counts = sum(terms_counts), doc_counts = sum(doc_counts))
+    summarise(terms_counts = sum(terms_counts), doc_counts = sum(doc_counts)) %>% 
+    data.table()
 # nu.terms <- sum(udt$terms_counts)
 setorder(udt, -terms_counts)
-udt <- udt[doc_counts>2]
+udt <- udt[doc_counts>4]
 udt$doc_counts <- NULL
 
 # udt$p <- udt$terms_counts/nu.terms
@@ -35,9 +36,10 @@ load("tbdt.Rda")
 bdt <- b.bdt %>% rbind(n.bdt) %>%
     rbind(t.bdt) %>%
     group_by(terms) %>%
-    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts))
+    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts)) %>% 
+    data.table()
 # nb.terms <- sum(bdt$terms_counts)
-bdt <- bdt[doc_counts > 2]
+bdt <- bdt[doc_counts > 4]
 
 bdt$term_1 <- stri_extract_first(bdt$terms, regex="^[a-z]+(?=_)")
 bdt$last <- stri_extract_last(bdt$terms, regex="(?<=_)[a-z]+$")
@@ -60,9 +62,10 @@ load("ttdt.Rda")
 tdt <- b.tdt %>% rbind(n.tdt) %>%
     rbind(t.tdt) %>%
     group_by(terms) %>%
-    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts))
+    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts)) %>% 
+    data.table()
 # nt.terms <- sum(tdt$terms_counts)
-tdt <- tdt[doc_counts>2]
+tdt <- tdt[doc_counts>4]
 
 tdt$term_1 <- stri_extract_first(tdt$terms, regex="^[a-z]+_[a-z]+(?=_)")
 tdt$last <- stri_extract_last(tdt$terms, regex="(?<=_)[a-z]+$")
@@ -84,10 +87,11 @@ load("tfdt.Rda")
 fdt <- b.fdt %>% rbind(n.fdt) %>%
     rbind(t.fdt) %>%
     group_by(terms) %>%
-    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts))
+    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts)) %>% 
+    data.table()
 # nf.terms <- sum(fdt$terms_counts)
 setorder(fdt, -terms_counts)
-fdt <- fdt[doc_counts>2]
+fdt <- fdt[doc_counts>4]
 
 fdt$term_1 <- stri_extract_first(fdt$terms, regex="^[a-z]+(_[a-z]+){2}(?=_)")
 fdt$last <- stri_extract_last(fdt$terms, regex="(?<=_)[a-z]+$")
@@ -110,11 +114,12 @@ load("tqdt.Rda")
 qdt <- b.qdt %>% rbind(n.qdt) %>%
     rbind(t.qdt) %>%
     group_by(terms) %>%
-    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts))
+    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts)) %>% 
+    data.table()
 # nq.terms <- sum(qdt$terms_counts)
 setorder(qdt, -terms_counts)
 
-qdt <- qdt[doc_counts>2]
+qdt <- qdt[doc_counts>4]
 
 qdt$term_1 <- stri_extract_first(qdt$terms, regex="^[a-z]+(_[a-z]+){3}(?=_)")
 qdt$last <- stri_extract_last(qdt$terms, regex="(?<=_)[a-z]+$")
@@ -136,11 +141,12 @@ load("tsdt.Rda")
 sdt <- b.sdt %>% rbind(n.sdt) %>%
     rbind(t.sdt) %>%
     group_by(terms) %>%
-    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts))
+    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts)) %>% 
+    data.table()
 # ns.terms <- sum(sdt$terms_counts)
 setorder(sdt, -terms_counts)
 
-sdt <- sdt[doc_counts>2]
+sdt <- sdt[doc_counts>4]
 
 sdt$term_1 <- stri_extract_first(sdt$terms, regex="^[a-z]+(_[a-z]+){4}(?=_)")
 sdt$last <- stri_extract_last(sdt$terms, regex="(?<=_)[a-z]+$")
@@ -162,11 +168,12 @@ load("tspdt.Rda")
 spdt <- b.spdt %>% rbind(n.spdt) %>%
     rbind(t.spdt) %>%
     group_by(terms) %>%
-    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts))
+    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts)) %>% 
+    data.table()
 # nsp.terms <- sum(spdt$terms_counts)
 setorder(spdt, -terms_counts)
 
-spdt <- spdt[doc_counts>2]
+spdt <- spdt[doc_counts>4]
 
 spdt$term_1 <- stri_extract_first(spdt$terms, regex="^[a-z]+(_[a-z]+){5}(?=_)")
 spdt$last <- stri_extract_last(spdt$terms, regex="(?<=_)[a-z]+$")
@@ -188,11 +195,12 @@ load("todt.Rda")
 odt <- b.odt %>% rbind(n.odt) %>%
     rbind(t.odt) %>%
     group_by(terms) %>%
-    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts))
+    summarise(terms_counts = sum(terms_counts), doc_counts=sum(doc_counts)) %>% 
+    data.table()
 # no.terms <- sum(odt$terms_counts)
 setorder(odt, -terms_counts)
 
-odt <- odt[doc_counts>2]
+odt <- odt[doc_counts>4]
 
 odt$term_1 <- stri_extract_first(odt$terms, regex="^[a-z]+(_[a-z]+){6}(?=_)")
 odt$last <- stri_extract_last(odt$terms, regex="(?<=_)[a-z]+$")
@@ -204,3 +212,15 @@ odt$doc_counts <- NULL
 setorder(odt, term_1, -terms_counts)
 
 save(odt, file="odt.Rda")
+
+# remove all data.tables except the ngrams
+ngram.stats <- tables()
+ngram.stats <- rbind(ngram.stats[NAME=="udt",],
+                     ngram.stats[NAME=="bdt",],
+                     ngram.stats[NAME=="tdt",],
+                     ngram.stats[NAME=="fdt",],
+                     ngram.stats[NAME=="qdt",],
+                     ngram.stats[NAME=="sdt",],
+                     ngram.stats[NAME=="spdt",],
+                     ngram.stats[NAME=="odt",]) %>% select(NAME, NROW, MB)
+save(ngram.stats, file="ngram_stats.Rda")

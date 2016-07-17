@@ -1,0 +1,56 @@
+# Notes
+
+### The model
+
+The model i used ended up being a version of the stupid-backoff ngram model. And i used a practical approach to tacle the problems at hand.  
+To use an ngram model, the assumption from Markov-chains is used, that the next state (word), is only dependent on a finite number of earlier states (words). I my model case, the highest ngram used is a 8-gram. When no 
+
+When examining the different models, i never really liked the smoothing aspect of many of the models where you are scraping probability mass from some word sequences you know exists in your training set, to word sequences that dont exists in your training set. I my opinion you end up giving probability to alot of word sequences that dont have any validity. They are just plain wrong, and shouldnt be given probability. I our case i like the model to only ever predict, what we know from our training set, and then try to put as many data as possible into the training set.  
+
+I like the simplicity in the stupid-backoff model, and that it is close to the best with large amount of data, so i went in that direction using 90% of the supplied en-us data from [HC Corpora,](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip)
+pushing to use as high an ngram as possible. With text2vec i could go as high as 8-gram on my 8gb laptop. To enhance my model-theoretic abilities it would probably have been wise to work on a Knesser-Ney model. But not this time.
+
+The models summary stats can be seen from this table, ordered from 1-gram to 8-gram. The model has been pruned to only include ngrams that exists in at least 5 different documents.
+```{r, echo=FALSE}
+load("ngram_stats.Rda")
+ngram.stats
+```
+The benefits of going as high as 8-gram is probably limited, with the amount of data used.
+
+### Testing
+
+Testing was done on the rest of the 10% of blogs, twitter and news documents, that wasnt included in the training set.  
+My first model was only pruned to ngrams appearing in atleast 3 documents, but because the app, was very slow on shinyapps.io i have pruned it further down to appearing in atleast 5 documents.
+The results for both models can be seen in this table, where s1, s3 and s5 shows hits in 1, 3 or 5 suggested words.  
+
+#### Model pruned to ngrams appearing in atleast 3 documents 
+```{r, echo=FALSE}
+load("test_stats.Rda")
+test.stats
+```
+
+#### Model pruned to ngrams appearing in atleast 5 documents
+```{r, echo=FALSE}
+load("test_stats2.Rda")
+test.stats2
+```
+
+Perplexity isnt calculated because the model is trimmed to save space, instead this practical test is done, to show model accuracy. 
+
+### Improvements to the model
+
+Given time and more knowledge on my part, i would have liked to combine the ngram model, with some context/relationship/classification model where a sentence like "i cant see without my reading" would guess that the next word most probably is a noun and that has to be 'scored' in context with both see and reading.  
+Inclusion of start and end sentence word-symbols could also improve the model.  
+If it was up to me i also wouldnt combine twitter and news data in the same model. The data should be so different that separate models would be more beneficial. But for this small project the data is combined for peer evaluation.
+
+### Sources used
+
+* text2vec is used to create the model, as i found it the most efficient for creating ngrams.
+* stringi is used to do string manipulation and regular expressions.
+* data.table is used to store sorted data for easy extraction.
+* dplyr - for basic manipulation
+* shiny - for shiny stuff
+* shinyjs - for even more shiny stuff
+* knitr - to include rmarkdown in shiny
+* pryr - easier display of object size
+* rbenchmark - during testing efficient ngram generation/regex methods

@@ -65,14 +65,14 @@ sum(news.df$s1)/n.len
 sum(news.df$s3)/n.len
 sum(news.df$s5)/n.len
 
-test.stats <- data.frame(type=c("blogs", "twitter", "news"),
+test.stats2 <- data.frame(type=c("blogs", "twitter", "news"),
                          test.size=c(b.len, t.len, n.len),
                          s1=c(sum(blogs.df$s1), sum(twit.df$s1), sum(news.df$s1)),
                          s3=c(sum(blogs.df$s3), sum(twit.df$s3), sum(news.df$s3)),
                          s5=c(sum(blogs.df$s5), sum(twit.df$s5), sum(news.df$s5)),
                          stringsAsFactors = FALSE)
-test.stats$s1.pct <- test.stats$s1/test.stats$test.size
-test.stats$s3.pct <- test.stats$s3/test.stats$test.size
-test.stats$s5.pct <- test.stats$s5/test.stats$test.size
+test.stats2$s1.pct <- test.stats2$s1/test.stats2$test.size
+test.stats2$s3.pct <- test.stats2$s3/test.stats2$test.size
+test.stats2$s5.pct <- test.stats2$s5/test.stats2$test.size
 
-save(test.stats, file="test_stats.Rda")
+save(test.stats2, file="test_stats2.Rda")
